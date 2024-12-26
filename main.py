@@ -112,7 +112,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
           'https://www.googleapis.com/auth/drive']
 
 # Load the service account key
-credentials = Credentials.from_service_account_file(r"/Users/anthonyge/Downloads/keen-enigma-445900-c8-2eaccc8cc1a4.json", scopes=SCOPES)
+credentials = Credentials.from_service_account_file(r"keen-enigma-445900-c8-2eaccc8cc1a4.json", scopes=SCOPES)
 
 # Authorize gspread
 client = gspread.authorize(credentials)
