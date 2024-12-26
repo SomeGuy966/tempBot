@@ -50,6 +50,9 @@ node_modules/
 # Optional npm cache directory
 .npm
 
+# debug log
+firebase-debug.log
+
 # Optional eslint cache
 .eslintcache
 
