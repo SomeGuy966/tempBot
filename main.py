@@ -14,7 +14,7 @@ current_date = datetime.now()
 previous_date = current_date - timedelta(days=1)
 desired_date = previous_date.strftime("%b %d")
 
-path = r"/Users/anthonyge/Downloads/chromedriver-mac-arm64/chromedriver"
+path = r"chromedriver-mac-arm64/chromedriver"
 service = Service(executable_path=path)
 driver = webdriver.Chrome(service=service)
 
