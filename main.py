@@ -1,3 +1,4 @@
+from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.wait import WebDriverWait
@@ -8,20 +9,30 @@ from datetime import datetime, timedelta
 import gspread
 from google.oauth2.service_account import Credentials
 
-# add comment for testing
+# Old chromedriver file path
+'''
+path = r"chromedriver-mac-arm64/chromedriver"
+service = Service(executable_path=path)
+driver = webdriver.Chrome(service=service)
+'''
 
+
+
+
+# Using this headless option means you don't need the "chromedriver" file anymore
+options = Options()
+options.add_argument("--headless")
+driver = webdriver.Chrome(options=options)
+
+
+# Gets date from the day immediately before so it scrapes data only from then
 current_date = datetime.now()
 previous_date = current_date - timedelta(days=1)
 desired_date = previous_date.strftime("%b %d")
 
-path = r"chromedriver-mac-arm64/chromedriver"
-service = Service(executable_path=path)
-driver = webdriver.Chrome(service=service)
 
 
-
-
-#Central Park temperatures
+# Central Park temperatures
 driver.get('http://www.weather.gov/wrh/timeseries?site=knyc')
 
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'highcharts-subtitle')))
@@ -44,7 +55,7 @@ while True:
         break
 
 
-# Converting lists to text
+# Converting the scraped HTML elements to text
 for i in range(len(dates)):
     dates[i] = dates[i].text
 for i in range(len(temps)):
@@ -86,6 +97,7 @@ for i in range(len(tempsLGA)):
     tempsLGA[i] = tempsLGA[i].text
 
 
+# Clearing the lists for any data that doesn't appear in both lists
 
 dummyDatesLGA = datesLGA[:]
 
@@ -102,6 +114,8 @@ for date in dummyDates:
         index = dates.index(date)
         temps.pop(index)
         dates.pop(index)
+
+
 
 
 
