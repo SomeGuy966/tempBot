@@ -9,21 +9,10 @@ from datetime import datetime, timedelta
 import gspread
 from google.oauth2.service_account import Credentials
 
-# Old chromedriver file path
-'''
-path = r"chromedriver-mac-arm64/chromedriver"
-service = Service(executable_path=path)
-driver = webdriver.Chrome(service=service)
-'''
-
-
-
-
 # Using this headless option means you don't need the "chromedriver" file anymore
 options = Options()
 options.add_argument("--headless")
 driver = webdriver.Chrome(options=options)
-
 
 # Gets date from the day immediately before so it scrapes data only from then
 current_date = datetime.now()
@@ -132,7 +121,7 @@ credentials = Credentials.from_service_account_file(r"keen-enigma-445900-c8-2eac
 client = gspread.authorize(credentials)
 
 # Open the Google Sheet by name or URL
-spreadsheet = client.open("NYTempData")
+spreadsheet = client.open_by_url('https://docs.google.com/spreadsheets/d/10Of4k4dO9WLXWLGsSXtghA9e6HSeszOlSCTcXYGtw1A/edit?gid=0#gid=0')
 
 # Select a worksheet (by name or index)
 worksheet = spreadsheet.worksheet("Sheet1")
