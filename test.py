@@ -10,15 +10,17 @@ from datetime import datetime, timedelta
 import gspread
 from google.oauth2.service_account import Credentials
 from selenium.webdriver.support.ui import Select
+import pytz
+import random
 
 driver = webdriver.Chrome()
 
-driver.get('https://mesonet.agron.iastate.edu/wx/afos/p.php?pil=PFMLOT&e=202405010815')
+driver.get('https://mesonet.agron.iastate.edu/wx/afos/list.phtml')
 
-table = WebDriverWait(driver,10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div/pre'))).text
+box_of_links = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'sectPFMDMX')))
 
-table = table.splitlines()
+table_identifier = 'sectPFMDMX'
 
-print(table)
+driver.find_element(By.XPATH, f'//*[@id="{table_identifier"]/a[{best_index}]')
 
-
+print(box_of_links.text)

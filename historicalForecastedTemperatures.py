@@ -10,20 +10,16 @@ from datetime import datetime, timedelta
 import gspread
 from google.oauth2.service_account import Credentials
 from selenium.webdriver.support.ui import Select
-
+import pytz
 import random
 
-def historical_forecasted_highs(location, region, table_identifier, link_identifier, time_length, timeshift):
-    # Get today's date
-    today = datetime.now()
-    # Format the date as ['YYYY', 'Mon', 'DD']
-    current_date = [today.strftime('%Y'), today.strftime('%b'), today.strftime('%d')]
+def historical_forecasted_highs(location, region, table_identifier, link_identifier, time_length):
+    # Sets the desired date as today's date
+    desired_date = datetime.now()
 
     historical_forecasted_highs = []
 
     for i in range(time_length):
-        #time.sleep(random.randint(1, 10))
-
         driver.get("https://mesonet.agron.iastate.edu/wx/afos/list.phtml")
 
         # Selecting the choose station dropdown
@@ -39,45 +35,44 @@ def historical_forecasted_highs(location, region, table_identifier, link_identif
         choose_station_input.send_keys(Keys.ENTER)
 
         # Identifying drop-downs by name
-        year = Select(driver.find_element(By.NAME, 'year'))
-        month = Select(driver.find_element(By.NAME, 'month'))
-        day = Select(driver.find_element(By.NAME, 'day'))
+        year = Select(driver.find_element(By.XPATH, '//*[@id="main-content"]/div/form/div/div[2]/select[1]'))
+        month = Select(driver.find_element(By.XPATH, '//*[@id="main-content"]/div/form/div/div[2]/select[2]'))
+        day = Select(driver.find_element(By.XPATH, '//*[@id="main-content"]/div/form/div/div[2]/select[3]'))
+
+        # Format the date as ['YYYY', 'Mon', 'DD']
+        formatted_date = desired_date.strftime('%Y %b %d').replace(' 0', ' ').split()
 
         # Inputting the dates
-        year.select_by_visible_text(current_date[0])
-        month.select_by_visible_text(current_date[1])
-        day.select_by_visible_text(current_date[2])
+        year.select_by_visible_text(formatted_date[0])
+        month.select_by_visible_text(formatted_date[1])
+        day.select_by_visible_text(formatted_date[2])
 
         # Clicking "Giveme giveme!" button
         give_me_button = driver.find_element(By.XPATH, '//*[@id="main-content"]/div/form/div/div[3]/input')
         give_me_button.click()
 
         # Calling method to identify forecast, identify daily high; adding daily high to daily high list
-        daily_high = max_min_identifier(table_identifier, link_identifier, timeshift, region)
+        daily_high = max_min_identifier(table_identifier, link_identifier, desired_date, region)
         print(daily_high)
         historical_forecasted_highs.append(daily_high)
 
-        # Subtracting a day from the date and setting that as the current date
-        past_date = today - timedelta(days=(i+1))
-        current_date = [past_date.strftime('%Y'), past_date.strftime('%b'), past_date.strftime('%#d')]
+        # Subtracting a day from the date and setting that as the desired date
+        desired_date = desired_date - timedelta(days=(1))
 
-    #write_to_google_sheets(historical_forecasted_highs, location)
-
-def max_min_identifier(table_identifier, link_identifier, timeshift, region):
-    # Identifying the table containing those links
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, table_identifier)))
-    box_of_links = driver.find_element(By.ID, table_identifier).text
-
-    # Identifying all links that contain the text PFM
-    links = driver.find_elements(By.PARTIAL_LINK_TEXT, link_identifier)
+def max_min_identifier(table_identifier, link_identifier, desired_date, region):
+    # Waiting for the box of links as identified by ID
+    box_of_links = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, table_identifier)))
+    box_of_links = box_of_links.text
 
     # Converting the table into timestamps
-    timestamps = [line.split('@')[1].strip() for line in box_of_links.strip().split('\n')]
+    timestamps = [link.split('@')[1].strip() for link in box_of_links.strip().split('\n')]
+    timestamps = [datetime.strptime(time, "%H:%M") for time in timestamps]
 
-    # Calling method to determine which timestamp is closest to 3:00 am
-    best_index = closest_to_window(timeshift, timestamps) + 1
+    # Calling method to determine which timestamp is closest to 8:00 am EST
+    best_index = closest_to_window(timestamps, desired_date) + 1
 
-    links[best_index].click()
+    best_time = driver.find_element(By.XPATH, f'//*[@id="{table_identifier}"]/a[{best_index}]')
+    best_time.click()
 
     table = WebDriverWait(driver,10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div/pre')))
     table = table.text
@@ -87,41 +82,38 @@ def max_min_identifier(table_identifier, link_identifier, timeshift, region):
         if region == line:
             max_min_row = table[table.index(line) + 8]
             max_min_row = max_min_row.split()
-
             forecasted_high = max_min_row[1]
 
             return forecasted_high
 
-            '''
-            data = line.split()
+def closest_to_window(timestamps, desired_date):
+    timeshift = 5
 
-            for point in data:
-                if point == 'Max/'
-            forecastedHigh = table[table.index(element)+1]
+    daylight_savings = is_in_daylight_savings(desired_date)
 
-            return forecastedHigh
-            break
-            '''
+    if daylight_savings == True:
+        timeshift = 4
+    elif daylight_savings == False:
+        timeshift = 5
 
-def closest_to_window(timeshift, timestamps):
     shifted_times = []
     for time in timestamps:
-        original_time = datetime.strptime(time, "%H:%M")
-        shifted_time = original_time - timedelta(hours=timeshift)
+        shifted_time = time - timedelta(hours=timeshift)
         shifted_times.append(shifted_time)
 
-    # Define the target time (3:00 AM)
-    target_time = datetime.strptime("03:00", "%H:%M")
+    # Define the target time (8:00 AM)
+    target_time = datetime.strptime("08:00", "%H:%M")
 
     # Find the index of the closest time to the target
     closest_index = -1
     min_diff = float('inf')  # Start with a large difference
 
     for i, time in enumerate(shifted_times):
-        diff = abs((time - target_time).total_seconds())
-        if diff < min_diff:
-            min_diff = diff
-            closest_index = i
+        if time < target_time:
+            diff = abs((target_time - time)).total_seconds()  # Calculate the difference in seconds
+            if diff < min_diff:
+                min_diff = diff
+                closest_index = i
 
     return closest_index
 
@@ -164,40 +156,49 @@ def write_to_google_sheets(historical_forecasted_highs, location):
             i -= 1
             continue
 
-def historical_highs():
-    link = input("Please input link: ")
-    driver.get(link)
+def is_in_daylight_savings(desired_date) -> bool:
+    # Convert the desired_date "date" object into a "datetime" object set at 00:00 (midnight)
+    converted_datetime_object = datetime.combine(desired_date, datetime.min.time())
 
-    table = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content"]/div/pre'))).text
+    # Creates a "timezone" object that sets the timezone to New York
+    timezone = pytz.timezone("America/New_York")
 
-    table = table.split()
+    # Converts the desired_date datetime object into a datetime object that has the timezone attached
+    localized_datetime = timezone.localize(converted_datetime_object)
 
-    print(table)
-
-
-
-
-
+    # Check if it's in DST
+    return bool(localized_datetime.dst())
 
 
 
 
-time_length = int(input("Please enter how many days back you would like the data to go: "))
+
+
+
+
+
+time_length = int(input("Please enter how many days back you would like the data to go (including today): "))
 
 # Initializing webdriver
 driver = webdriver.Chrome()
 
 # Calling method for New York
-#historical_forecasted_highs("New York", 'Central Park-New York NY', 'sectPFMOKX', 'PFMOKX', time_length, 5)
+#historical_forecasted_highs("New York", 'Central Park-New York NY', 'sectPFMOKX', 'PFMOKX', time_length)
 
 # Calling method for Miami
-#historical_forecasted_highs("Miami", 'Miami-Miami Dade FL','sectPFMMFL', 'PFMMFL', time_length, 5)
+historical_forecasted_highs("Miami", 'Miami-Miami Dade FL','sectPFMMFL', 'PFMMFL', time_length)
 
 # Calling method for Philadelphia
-#historical_forecasted_highs("Mount Holly", 'Philadelphia-Philadelphia PA', 'sectPFMPHI', 'PFMPHI', time_length, 5)
+#historical_forecasted_highs("Mount Holly", 'Philadelphia-Philadelphia PA', 'sectPFMPHI', 'PFMPHI', time_length)
 
 # Calling method for Chicago
-#historical_forecasted_highs("Chicago", 'Chicago Midway Airport-Cook IL', 'sectPFMLOT', 'PFMLOT', time_length, 6)
+#historical_forecasted_highs("Chicago", 'Chicago Midway Airport-Cook IL', 'sectPFMLOT', 'PFMLOT', time_length)
+
+# Calling method for Austin
+#historical_forecasted_highs("Austin", "Austin Bergstrom-Travis TX ", 'sectPFMEWX', 'PFMEWX', time_length)
 
 # Calling method for Denver
-historical_forecasted_highs("Denver", 'Chicago Midway Airport-Cook IL', 'sectPFMBOU', 'PFMBOU', time_length, 6)
+#historical_forecasted_highs("Denver", "Denver Int'l Airport-Denver CO", 'sectPFMBOU', 'PFMBOU', time_length)
+
+
+
