@@ -126,7 +126,7 @@ def get_date_n_months_before(n):
 end_date = input("Enter the end date in the format '2024 Dec 24' (inclusive): ")
 
 # Calling method for New York
-historical_observed_highs("New York", 'sectCF6NYC', end_date)
+#historical_observed_highs("New York", 'sectCF6NYC', end_date)
 
 # Calling method for Miami
 #historical_observed_highs("Miami", 'sectCF6MIA', end_date)

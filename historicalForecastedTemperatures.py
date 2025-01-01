@@ -186,7 +186,7 @@ driver = webdriver.Chrome()
 #historical_forecasted_highs("New York", 'Central Park-New York NY', 'sectPFMOKX', 'PFMOKX', time_length)
 
 # Calling method for Miami
-historical_forecasted_highs("Miami", 'Miami-Miami Dade FL','sectPFMMFL', 'PFMMFL', time_length)
+#historical_forecasted_highs("Miami", 'Miami-Miami Dade FL','sectPFMMFL', 'PFMMFL', time_length)
 
 # Calling method for Philadelphia
 #historical_forecasted_highs("Mount Holly", 'Philadelphia-Philadelphia PA', 'sectPFMPHI', 'PFMPHI', time_length)
