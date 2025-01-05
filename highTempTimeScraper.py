@@ -71,7 +71,12 @@ def time_of_temperature_high_scraper(location, link_identifier, start_date, end_
             if 'MAXIMUM' in line:
                 data = line.split()
                 time = str(data[2] + " " + data[3])
-                print(time_converter(time))
+
+                if location == 'Denver' or location == 'New York':
+                    print(time_converter(time))
+                else:
+                    print(time)
+
                 break
 
         desired_date = desired_date - timedelta(days=(1))
@@ -102,8 +107,8 @@ def time_converter(time):
     return formatted_time
 
 
-start_date = str(input('Please enter the inclusive starting date in the following format (2025 Jan 1): '))
-end_date = str(input('Please enter the inclusive ending date in the following format (2025 Jan 1): '))
+start_date = str(input('Please enter the inclusive ending date in the following format (2024 Dec 31): '))
+end_date = str(input('Please enter the inclusive starting date in the following format (2024 Jan 1): '))
 
 driver = webdriver.Chrome()
 
@@ -111,8 +116,16 @@ driver = webdriver.Chrome()
 #time_of_temperature_high_scraper('New York', 'sectCLINYC', start_date, end_date)
 
 # Calling method for Miami
-time_of_temperature_high_scraper('Miami', 'sectCLIMIA', start_date, end_date)
+#time_of_temperature_high_scraper('Miami', 'sectCLIMIA', start_date, end_date)
 
+# Calling method for Austin
+#time_of_temperature_high_scraper('Austin', 'sectCLIAUS', start_date, end_date)
 
+# Calling method for Houston
+#time_of_temperature_high_scraper('Houston', 'sectCLIHOU', start_date, end_date)
 
+# Calling method for Philadelphia
+#time_of_temperature_high_scraper('Mount Holly', 'sectCLIPHL', start_date, end_date)
 
+# Calling method for Chicago
+time_of_temperature_high_scraper('Chicago', 'sectCLIMDW', start_date, end_date)
